@@ -28,6 +28,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/prque"
+	"github.com/ethereum/go-ethereum/consensus/misc"
 	"github.com/ethereum/go-ethereum/consensus/misc/eip1559"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
@@ -1298,8 +1299,10 @@ func (pool *LegacyPool) runReorg(done chan struct{}, reset *txpoolResetRequest, 
 		pool.demoteUnexecutables()
 		if reset.newHead != nil {
 			if pool.chainconfig.IsLondon(new(big.Int).Add(reset.newHead.Number, big.NewInt(1))) {
-				pendingBaseFee := eip1559.CalcBaseFee(pool.chainconfig, reset.newHead)
-				pool.priced.SetBaseFee(pendingBaseFee)
+				if !(misc.ZeroGasPriceChain(pool.chainconfig)) {
+					pendingBaseFee := eip1559.CalcBaseFee(pool.chainconfig, reset.newHead)
+					pool.priced.SetBaseFee(pendingBaseFee)
+				}
 			} else {
 				pool.priced.Reheap()
 			}
